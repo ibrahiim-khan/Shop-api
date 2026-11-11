@@ -8,5 +8,9 @@ class ProductCreate(BaseModel):
     stock: int = Field(gt=0)
     price : float = Field (gt=0)
 
-
+class UpdateProduct(BaseModel):
+    name: str
+    description : str =Field(max_length=50)
+    stock: int = Field(gt=0)
+    price : float = Field (gt=0)
 
