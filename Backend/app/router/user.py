@@ -2,7 +2,7 @@ from fastapi import APIRouter , status , Depends , HTTPException
 from Backend.app.database.database import get_db, engine
 from Backend.app.model. user import User 
 from Backend.app.schema.user import UserCreate , UserLogin
-from Backend.app.utils.security import hash_password , verify_password
+from Backend.app.utils.security import hash_password , verify_password , createJwt , oauth2_scheme
 from sqlalchemy.orm import Session
 
 
@@ -43,4 +43,18 @@ def login(User_data:UserLogin, db: Session = Depends(get_db)):
     if not verify_password(User_data.password, login_detail.password_hash):
         raise HTTPException (status_code=401, detail="invalid password or email")
 
-    return {"message":"Login Successfully"}
+    
+    token=createJwt(login_detail.user_id)
+
+    return {
+        "token":token,
+        "token_type":"bearer"
+    }
+
+@router.get("/protected")
+def protected_route(token:str=Depends(oauth2_scheme)):
+    return {
+        "message":"you are authenticated",
+        "token":token
+    }
+    
