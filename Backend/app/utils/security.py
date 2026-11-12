@@ -1,10 +1,15 @@
 import os
 from dotenv import load_dotenv
 from passlib.context import  CryptContext 
+from datetime import datetime, timedelta, timezone  
+from Backend.app.database.database import get_db
+from Backend.app.model.user import User
+from fastapi import Depends , HTTPException
+from sqlalchemy.orm import Session
 from jose import jwt
 
-from fastapi.security import OAuth2PasswordBearer
-oauth2_scheme=OAuth2PasswordBearer(tokenUrl="User/Login")
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+oauth2_scheme=HTTPBearer(   )
 
 #this code is used for password hashing and hashed password is store in the database
 
@@ -32,8 +37,10 @@ SECRET_KEY=os.getenv("SECRET_KEY")
 ALGORITHM  = "HS256"
  
 def createJwt(user_id:int):
+    expire=datetime.now(timezone.utc)+timedelta(seconds=40)
     payload={
-        "sub":str(user_id)
+        "sub":str(user_id),
+        "exp":expire
     }
 
     token=jwt.encode(
@@ -62,16 +69,23 @@ def verifytoken(token:str):
         return None
 
 
-def get_current_user(token:str=Depends(oauth2_scheme)):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(oauth2_scheme),db:Session =Depends(get_db)):
+    token = credentials.credentials
     payload=verifytoken(token)
 
     if not payload:
-        raise Exception("invalid token")
+        raise HTTPException(status_code=401, detail="invalid token")
     
     user_id=payload.get("sub")
 
     if not user_id:
-        raise Exception("invalid token")
+        raise HTTPException(status_code=401, detail="invalid token")
 
-    
-    return user_id
+    object_user=db.query(User).filter(User.User_id==int (user_id)).first()
+
+    if not object_user :
+        raise HTTPException(status_code=404 , detail="User not found ")
+
+
+
+    return object_user

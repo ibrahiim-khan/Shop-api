@@ -2,7 +2,7 @@ from fastapi import APIRouter , status , Depends , HTTPException
 from Backend.app.database.database import get_db, engine
 from Backend.app.model. user import User 
 from Backend.app.schema.user import UserCreate , UserLogin
-from Backend.app.utils.security import hash_password , verify_password , createJwt , oauth2_scheme
+from Backend.app.utils.security import hash_password , verify_password , createJwt , get_current_user 
 from sqlalchemy.orm import Session
 
 
@@ -23,7 +23,8 @@ def register(User_data:UserCreate, db: Session = Depends(get_db)):
     New_user=User(
         user_name=User_data.name,
         email=User_data.email,
-        password_hash=hash_password(User_data.password)
+        password_hash=hash_password(User_data.password),
+        role="User"
     )
 
     db.add(New_user)
@@ -52,9 +53,16 @@ def login(User_data:UserLogin, db: Session = Depends(get_db)):
     }
 
 @router.get("/protected")
-def protected_route(token:str=Depends(oauth2_scheme)):
+def protected_route(user: User = Depends(get_current_user)):
+    if (User.role !="admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Authenticated But NOt autharized"
+        )
+
     return {
-        "message":"you are authenticated",
-        "token":token
-    }
-    
+        "message": "You are authenticated",
+        "user_id": user.user_id,
+        "user_name":user.user_name,
+        "user_email":user.email,
+        }
