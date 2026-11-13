@@ -2,6 +2,7 @@ from fastapi import APIRouter,Depends , HTTPException, status
 from Backend.app.database.database import get_db
 from Backend.app.schema.product import ProductCreate , UpdateProduct
 from Backend.app.model.product import Product
+from Backend.app.utils.security import require_admin
 from sqlalchemy.orm import Session
 
 
@@ -27,7 +28,7 @@ def viewproduct(Product_id:int, db :Session = Depends(get_db)):
     return product
 
 @router.post("/",status_code=status.HTTP_201_CREATED)
-def createProduct(product:ProductCreate,db:Session=Depends(get_db)):
+def createProduct(product:ProductCreate,db:Session=Depends(get_db),user:User=Depends(require_admin)):
     new_product=Product(
         name=product.name,
         description=product.description,
@@ -43,7 +44,7 @@ def createProduct(product:ProductCreate,db:Session=Depends(get_db)):
 
 
 @router.delete("/{Product_id}")
-def deleteProduct(Product_id:int,db : Session = Depends(get_db)):
+def deleteProduct(Product_id:int,db : Session = Depends(get_db),user:User=Depends(require_admin)):
     product=db.query(Product).filter(Product.id==Product_id).first()
 
     if not product:
@@ -55,7 +56,7 @@ def deleteProduct(Product_id:int,db : Session = Depends(get_db)):
     return {"Message":"Product delete Permanently"}
 
 @router.put("/{Product_id}")
-def updateProduct(Product_id: int, Product_data : UpdateProduct ,db: Session = Depends(get_db)):
+def updateProduct(Product_id: int, Product_data : UpdateProduct ,db: Session = Depends(get_db),user:User=Depends(require_admin)):
     product=db.query(Product).filter(Product.id==Product_id).first()
 
     if not product:

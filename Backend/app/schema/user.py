@@ -9,3 +9,9 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
+
+class UserUpdate(BaseModel):
+    name:str=Feild(max_length=100)
+    email:EmailStr
+    is_active=bool

@@ -1,8 +1,8 @@
 from fastapi import APIRouter , status , Depends , HTTPException
 from Backend.app.database.database import get_db, engine
 from Backend.app.model. user import User 
-from Backend.app.schema.user import UserCreate , UserLogin
-from Backend.app.utils.security import hash_password , verify_password , createJwt , get_current_user 
+from Backend.app.schema.user import UserCreate , UserLogin , UserUpdate
+from Backend.app.utils.security import hash_password , verify_password , createJwt , get_current_user ,require_admin , object_level_authk
 from sqlalchemy.orm import Session
 
 
@@ -10,12 +10,6 @@ from sqlalchemy.orm import Session
 
 
 router=APIRouter()
-
-@router.get("/")
-def viewuser(db: Session=Depends(get_db)):
-    users=db.query(User).all()
-    return users
-    
 
 
 @router.post("/Register",status_code=status.HTTP_201_CREATED)
@@ -52,17 +46,63 @@ def login(User_data:UserLogin, db: Session = Depends(get_db)):
         "token_type":"bearer"
     }
 
-@router.get("/protected")
-def protected_route(user: User = Depends(get_current_user)):
-    if (User.role !="admin"):
-        raise HTTPException(
-            status_code=403,
-            detail="Authenticated But NOt autharized"
-        )
 
+@router.get("/ALL_Users")
+def viewuser(db: Session=Depends(get_db),user:User=Depends(require_admin)):
+    users=db.query(User).all()
+    return users
+    
+
+
+
+@router.get("/Admin")
+def admin(user:User=Depends(require_admin)):
     return {
-        "message": "You are authenticated",
-        "user_id": user.user_id,
-        "user_name":user.user_name,
-        "user_email":user.email,
-        }
+        "message":"Welcome Admin",
+        "Name":user.user_name,
+        "email":user.email,
+        "role":user.role
+    }
+
+
+@router.put("/Update_profie/{user_id}")
+def update_profile(user_detail:UserUpdate,db:Session=Depends(get_db),authorized_user_id:int=Depends(object_level_auth)):
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# @router.get("/protected")
+# def protected_route(user: User = Depends(get_current_user)):
+#     if (User.role !="admin"):
+#         raise HTTPException(
+#             status_code=403,
+#             detail="Authenticated But NOt autharized"
+#         )
+
+#     return {
+#         "message": "You are authenticated",
+#         "user_id": user.user_id,
+#         "user_name":user.user_name,
+#         "user_email":user.email,
+#         }
+    }

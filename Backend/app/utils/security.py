@@ -37,7 +37,7 @@ SECRET_KEY=os.getenv("SECRET_KEY")
 ALGORITHM  = "HS256"
  
 def createJwt(user_id:int):
-    expire=datetime.now(timezone.utc)+timedelta(seconds=40)
+    expire=datetime.now(timezone.utc)+timedelta(minutes=20)
     payload={
         "sub":str(user_id),
         "exp":expire
@@ -81,7 +81,7 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(oauth2_
     if not user_id:
         raise HTTPException(status_code=401, detail="invalid token")
 
-    object_user=db.query(User).filter(User.User_id==int (user_id)).first()
+    object_user=db.query(User).filter(User.user_id==int (user_id)).first()
 
     if not object_user :
         raise HTTPException(status_code=404 , detail="User not found ")
@@ -89,3 +89,16 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(oauth2_
 
 
     return object_user
+
+
+def require_admin(user: User= Depends(get_current_user)):
+    if user.role!="admin":
+        raise HTTPException(status_code=403,detail="Admin access Required")
+
+    return user
+
+
+def object_level_auth(user_id:int,user: User=Depends(get_current_user),):
+    if(user.user_id != user_id):
+        raise HTTPException(status_code=403 , detail="Access Denaid")
+    return user_id

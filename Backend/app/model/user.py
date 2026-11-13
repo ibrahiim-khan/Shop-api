@@ -11,3 +11,5 @@ class User(Base):
     is_active =Column(Boolean, default=True)
     created_at=Column(DateTime)
     role = Column(String)
+
+
